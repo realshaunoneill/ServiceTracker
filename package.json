@@ -1,0 +1,22 @@
+{
+  "name": "servicetracker",
+  "version": "1.0.0",
+  "description": "Track which websites are using your service",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index"
+  },
+  "keywords": [
+    "service",
+    "monitor"
+  ],
+  "author": "Shaun O'Neill (XeliteXirish)",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "mongoose": "^5.1.2",
+    "morgan": "^1.9.0",
+    "signale": "^1.1.0"
+  }
+}
