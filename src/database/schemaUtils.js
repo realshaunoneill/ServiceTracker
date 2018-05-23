@@ -6,10 +6,10 @@ const driver = require('./driver');
 /**
  * Registers a new server to look for sessions
  * @param {String} serviceName - The name of the service, also used to accept new session data
- * @param {String} requireToken - If a service token to record the session data
+ * @param {Boolean} requireToken - If a service token to record the session data
  * @param {String} token - The token required to save a new session
  */
-exports.saveNewApp = function (serviceName, requireToken, token) {
+exports.saveNewApp = async function (serviceName, requireToken, token) {
     try {
         if (index.usingDatabase) {
             let newApp = new driver.getModals().Apps({
@@ -19,6 +19,7 @@ exports.saveNewApp = function (serviceName, requireToken, token) {
                 date: new Date().toDateString()
             });
             newApp.save();
+            return true;
         }
         signale.info(`New session saved for service name ${serviceName}, listening for new sessions immediately..`);
     } catch (err) {

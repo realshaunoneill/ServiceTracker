@@ -6,7 +6,7 @@ exports.init = function (app) {
         let apps = await schemaUtils.fetchService();
 
         res.render('dashboard', {
-            apps: apps
+            services: apps
         })
     });
 };

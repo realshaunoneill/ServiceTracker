@@ -30,8 +30,10 @@ if (!exports.usingDatabase) signale.info(`No database url specified.... Only log
 if (exports.debug) signale.info(`Debug mode enable... Showing all status 200 requests to console!`);
 
 if (exports.usingDatabase && !exports.debug) {
-    driver.connect();
-    signale.success(`Successfully connected to database at ${exports.databaseUrl}`);
+    driver.connect().then(suc => {
+        if (suc) signale.success(`Successfully connected to database at ${exports.databaseUrl}`);
+        else return signale.fatal(`Unable to connect to database at ${exports.databaseUrl}`);
+    });
 }
 
 try {
@@ -39,6 +41,9 @@ try {
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(express.static('Web'));
     app.set('view engine', 'ejs');
+
+    app.use('/', express.static(`${__dirname}/dashboard/static/`));
+    app.set('views', `${__dirname}/dashboard/views/`);
 
     registerEndpoints();
 
@@ -65,12 +70,35 @@ try {
 }
 
 function registerEndpoints() {
-    app.get('/api/:serviceName', async (req, res) => {
+
+    app.post('/api/service', async (req, res) => {
+        try {
+            let name = req.query.name;
+            let requireToken = req.query.requireToken;
+            let token = req.query.token;
+
+            if (!name || !requireToken || !token) return res.status(500).send(`You must specify the following query paramaters: name, requireToken, token`);
+
+            if (!exports.usingDatabase || exports.debug) {
+                res.status(200).send(`Successfully saving session data for the new service: ${serviceName}`);
+                return signale.info(`Successfully saving session data for the new service: ${serviceName}!`);
+            }
+
+            schemaUtils.saveNewApp(name, requireToken, token).then(() => {
+                res.status(200).send(`Successfully saved new service with the name ${name}`);
+            })
+
+        } catch (err) {
+            signale.error(`Error registering new service, Error: ${err.stack}`);
+        }
+    });
+
+    app.post('/api/sessions/:serviceName', async (req, res) => {
         try {
             let searchName = req.params.serviceName;
             if (!searchName) return res.status(403).send(`You must specify a serviceName to search for!`);
 
-            if (!exports.usingDatabase) {
+            if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully recorded session`);
                 return signale.info(`Successfully recorded session info for ${searchName}!`);
             }

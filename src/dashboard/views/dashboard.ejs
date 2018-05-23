@@ -2,13 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home - OOP Development</title>
+    <title>Home - Service Tracker</title>
 
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
 </head>
 
 <body>
+
 <section class="hero is-dark is-bold">
+    <div class="hero-head">
+        <nav class="navbar" role="navigation">
+            <div class="navbar-brand">
+                <a href="/" class="navbar-item">
+                    <b>Service Tracker</b>
+                </a>
+            </div>
+            <div class="navbar-menu">
+                <div class="navbar-end">
+
+                    <div class="navbar-item">
+                        <span class="button is-info is-outlined">New Service</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
     <div class="hero-body">
         <div class="container">
             <h1 class="title">&bull;&nbsp;Saved login entries:</h1>
@@ -18,31 +36,24 @@
         <hr/>
         <br>
 
-        <table class="table" style="width: 100%">
-            <thead>
-            <tr>
-                <th>Username</th>
-                <th>Password</th>
-                <th><i>Service</i></th>
-                <th>Date</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <% for (let x = 0; x < loginEntries.length; x++) { %>
-            <tr>
-                <th><%- loginEntries[x].username %></th>
-                <th><%- loginEntries[x].password %></th>
-                <th><%- loginEntries[x].service %></th>
-                <th><%- loginEntries[x].date %></th>
-            </tr>
-            <% } %>
-            </tbody>
-        </table>
-    </div>
-    <div class="hero-foot has-text-centered">
-        <p><b>~ Made by <a href="https://www.shaunoneill.com">Shaun O'Neill</a> ~</b></p>
     </div>
 </section>
+
+<% if(services.length === 0){ %>
+<div class="notification is-danger has-text-centered">
+    <b>~ There are no services registered to record active sessions! ~</b>
+</div>
+<% } else for (let x = 0; x < services.length; x++) { %>
+
+<section id="<%- services[x].name %>" class="section">
+    <h1 class="title"><%- services[x].name %></h1>
+</section>
+
+<% } %>
+
+<footer class="footer has-text-centered">
+    <p><b>~ Made by <a href="https://www.shaunoneill.com">Shaun O'Neill</a> ~</b></p>
+</footer>
+
 </body>
 </html>

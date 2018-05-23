@@ -5,7 +5,7 @@ const index = require('../index');
 const mongoose = require('mongoose');
 let db = exports.db = null;
 
-exports.connect = function () {
+exports.connect = async function () {
     try {
 
         mongoose.connect(index.databaseUrl, {
@@ -14,6 +14,9 @@ exports.connect = function () {
             socketTimeoutMS: 30000,
             keepAlive: 120,
             poolSize: 100
+        }).catch(err => {
+            signale.fatal(`Unable to open database connection, Error: ${err.stack}`);
+            return false;
         });
 
         db = mongoose.connection;
@@ -29,6 +32,8 @@ exports.connect = function () {
         db.once('open', function () {
             return true;
         });
+
+        return true;
 
     } catch (err) {
         signale.fatal(`Error connecting to the database, Error: ${err.stack}`);
