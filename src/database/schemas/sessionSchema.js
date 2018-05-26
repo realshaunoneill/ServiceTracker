@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 module.exports = new mongoose.Schema({
-    sessionID: {type: String},
+    sessionData: {type: String},
     date: {type: Date, default: new Date()},
-    token: {type: String}
+    token: {type: String},
+    dataIsURL: {type: Boolean}
 });

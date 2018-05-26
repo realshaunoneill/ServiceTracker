@@ -7,5 +7,7 @@ module.exports = new mongoose.Schema({
     sessions: [sessionSchema],
     created: {type: Date, default: new Date()},
     requireToken: {type: Boolean, default: false},
-    token: {type: String}
+    appToken: {type: String},
+    sessionWait: {type: Number, default: 1},
+    removed: {type: Boolean, default: false}
 });

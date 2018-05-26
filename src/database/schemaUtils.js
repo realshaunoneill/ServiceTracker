@@ -3,20 +3,25 @@ const signale = require('signale');
 const index = require('../index');
 const driver = require('./driver');
 
+const URL_REGEX = '(http(s)?:\\/\\/.)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)';
+
 /**
  * Registers a new server to look for sessions
  * @param {String} serviceName - The name of the service, also used to accept new session data
  * @param {Boolean} requireToken - If a service token to record the session data
  * @param {String} token - The token required to save a new session
+ * @param {Number} sessionWait - The amount of days before a new session can be sent and recorded
  */
-exports.saveNewApp = async function (serviceName, requireToken, token) {
+exports.saveNewApp = async function (serviceName, requireToken, token, sessionWait) {
     try {
         if (index.usingDatabase) {
             let newApp = new driver.getModals().Apps({
-                serviceName: serviceName,
+                name: serviceName,
                 requireToken: requireToken,
-                token: token,
-                date: new Date().toDateString()
+                appToken: token,
+                date: new Date().toDateString(),
+                sessionWait: sessionWait,
+                sessions: []
             });
             newApp.save();
             return true;
@@ -51,13 +56,28 @@ exports.fetchService = async function (name) {
     }
 };
 
-exports.saveSession = async function (serviceName, sessionID, token) {
+/**
+ * Saves a new session to it's service is the time limit has exceeded
+ * @param service - The service modal this application runs
+ * @param {String} sessionData - The applications unique ID to differentiate it from other applications
+ * @param {String} token - The token being supplied by the application
+ * @return {Promise<Boolean>} - Whether the session was successfully saved
+ */
+exports.saveSession = async function (service, sessionData, token) {
     try {
-        let session = await exports.fetchService(serviceName);
-        if (!session) {
-            signale.debug(`Unable to find session with the name ${serviceName}, not saving session!`);
+        //TODO we have to make sure there is an element
+        service[0].sessions.push({
+            sessionData: sessionData,
+            dataIsURL: (!!sessionData.match(URL_REGEX)),
+            date: new Date(),
+            token: token
+        });
+
+        service[0].save().then(() => {
+            return true;
+        }).catch(err => {
             return false;
-        }
+        })
 
 
     } catch (err) {

@@ -3,6 +3,7 @@ const path = require('path');
 const http = require('http');
 
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const signale = require('signale');
@@ -39,6 +40,7 @@ if (exports.usingDatabase && !exports.debug) {
 try {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: true}));
+    app.use(cors());
     app.use(express.static('Web'));
     app.set('view engine', 'ejs');
 
@@ -71,20 +73,31 @@ try {
 
 function registerEndpoints() {
 
+    app.get('/api/service', async (req, res) => {
+        try {
+            let name = req.query.name;
+            let services = await schemaUtils.fetchService(name);
+            res.status(200).json(services);
+        } catch (err) {
+            signale.error(`Error fetching saved services, Error: ${err.stack}`);
+        }
+    });
+
     app.post('/api/service', async (req, res) => {
         try {
             let name = req.query.name;
             let requireToken = req.query.requireToken;
             let token = req.query.token;
+            let sessionWait = req.query.sessionWait = 1;
 
-            if (!name || !requireToken || !token) return res.status(500).send(`You must specify the following query paramaters: name, requireToken, token`);
+            if (!name || !(requireToken && !token)) return res.status(500).send(`You must specify the following query parameters: name, requireToken, token, sessionWait`);
 
             if (!exports.usingDatabase || exports.debug) {
-                res.status(200).send(`Successfully saving session data for the new service: ${serviceName}`);
-                return signale.info(`Successfully saving session data for the new service: ${serviceName}!`);
+                res.status(200).send(`Successfully saving session data for the new service: ${name}`);
+                return signale.info(`Successfully saving session data for the new service: ${name}!`);
             }
 
-            schemaUtils.saveNewApp(name, requireToken, token).then(() => {
+            schemaUtils.saveNewApp(name, requireToken, token, sessionWait).then(() => {
                 res.status(200).send(`Successfully saved new service with the name ${name}`);
             })
 
@@ -93,10 +106,28 @@ function registerEndpoints() {
         }
     });
 
-    app.post('/api/sessions/:serviceName', async (req, res) => {
+    app.get('/api/sessions', async (req, res) => {
         try {
-            let searchName = req.params.serviceName;
-            if (!searchName) return res.status(403).send(`You must specify a serviceName to search for!`);
+            let name = req.query.name;
+            if (!name) return res.status(500).send(`You must specify a name to search for!`);
+
+            let service = await schemaUtils.fetchService(name);
+            if (!service) return res.status(500).send(`No service with the name ${name} exists!`);
+
+            res.status(200).json(service.services || []);
+
+        } catch (err) {
+            signale.error(`Unable fetching sessions, Errors: ${err.stack}`);
+        }
+    });
+
+    app.post('/api/sessions', async (req, res) => {
+        try {
+            let searchName = req.query.name;
+            let sessionData = req.query.sessionData;
+            let token = req.query.token;
+
+            if (!searchName || !sessionData) return res.status(403).send(`You must specify a serviceName to search for along with a sessionData!`);
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully recorded session`);
@@ -107,9 +138,14 @@ function registerEndpoints() {
             if (!service) return res.status(403).send(`No service with the name ${searchName} exists or you don't have permission to view it!`);
 
             // Check if we need an auth token and one was sent
-            if (service.requireToken && req.query.token) {
-                if (!service.token === req.query.token) return res.status(403).send(`You don't have permission to register a session for this service!`);
+            if (service.requireToken) {
+                if (!token || (service.token !== token)) return res.status(403).send(`You don't have permission to register a session for this service!`);
             }
+
+            let result = await schemaUtils.saveSession(service, sessionData, token);
+            if (result) return res.status(500).send(`The session failed to send for an unknown reason! Try again later!`);
+            res.status(200).send(`Session successfully recorded!`);
+
         } catch (err) {
             signale.error(`Unable to handle session recording, Error: ${err.stack}`);
         }
