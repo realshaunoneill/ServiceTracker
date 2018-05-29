@@ -61,8 +61,7 @@ try {
     let port = exports.port;
     httpServer.listen(port, (err) => {
         if (err) {
-            signale.fatal(`FAILED TO OPEN WEB SERVER, ERROR: ${err.stack}`);
-            return;
+            return signale.fatal(`FAILED TO OPEN WEB SERVER, ERROR: ${err.stack}`);
         }
         signale.success(`Successfully started webserver... listening on port: ${exports.port}`);
     })
@@ -77,6 +76,8 @@ function registerEndpoints() {
         try {
             let name = req.query.name;
             let services = await schemaUtils.fetchService(name);
+            if (!services) return res.status(500).send(`No services exist!`);
+
             res.status(200).json(services);
         } catch (err) {
             signale.error(`Error fetching saved services, Error: ${err.stack}`);
@@ -95,6 +96,12 @@ function registerEndpoints() {
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully saving session data for the new service: ${name}`);
                 return signale.info(`Successfully saving session data for the new service: ${name}!`);
+            }
+
+            // We're going to check if a service already exists with the same name
+            let searchService = await schemaUtils.fetchService(name);
+            if (searchService) {
+                return res.status(500).send(`A service with the name ${name} already exists!`);
             }
 
             schemaUtils.saveNewApp(name, requireToken, token, sessionWait).then(() => {

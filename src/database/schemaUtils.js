@@ -50,7 +50,7 @@ exports.fetchService = async function (name) {
             apps = await driver.getModals().Apps.find({});
         }
 
-        return apps || [];
+        return apps;
     } catch (err) {
         signale.error(`Unable to fetch apps, Error: ${err.stack}`);
     }
