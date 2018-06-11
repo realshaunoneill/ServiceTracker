@@ -72,6 +72,15 @@ try {
 
 function registerEndpoints() {
 
+    /**
+     * @api {get} /api/service Request information about a specific service
+     * @apiName FetchService
+     * @apiGroup Service
+     *
+     * @apiParam {String} name The services unique name
+     *
+     * @apiSuccess {JSON} service The service data including sessions
+     */
     app.get('/api/service', async (req, res) => {
         try {
             let name = req.query.name;
@@ -113,6 +122,15 @@ function registerEndpoints() {
         }
     });
 
+    /**
+     * @api {get} /api/sessions Request session information about a service
+     * @apiName FetchSessions
+     * @apiGroup Sessions
+     *
+     * @apiParam {String} name The name of the service
+     *
+     * @apiSuccess {JSON} sessions The session data for the service
+     */
     app.get('/api/sessions', async (req, res) => {
         try {
             let name = req.query.name;
@@ -128,6 +146,15 @@ function registerEndpoints() {
         }
     });
 
+    /**
+     * @api {post} /api/sessions Add a new session to a particular service
+     * @apiName RecordSession
+     * @apiGroup Sessions
+     *
+     * @apiParam {String} name The name of the service this session is for
+     * @apiParam {String} sessionData The data the session has to record
+     * @apiParam {String} token The auth token optionally required by the service to record the session
+     */
     app.post('/api/sessions', async (req, res) => {
         try {
             let searchName = req.query.name;
