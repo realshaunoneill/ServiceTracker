@@ -8,10 +8,14 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const signale = require('signale');
 const chalk = require('chalk');
+const passport = require('passport');
+const cookieSession = require('cookie-session');
 
 const driver = require('./database/driver');
 const schemaUtils = require('./database/schemaUtils');
 const dashboard = require('./dashboard/dashboard');
+
+const LocalStrategy = require('passport-local').Strategy;
 
 let config;
 try {
@@ -39,11 +43,24 @@ if (exports.usingDatabase && !exports.debug) {
 }
 
 try {
+
+} catch (err) {
+    signale.error(`Error enabling passport config, Error: ${err.stack}`);
+}
+
+try {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(cors());
     app.use(express.static('Web'));
     app.set('view engine', 'ejs');
+    app.use(cookieSession({
+        name: 'loginSession',
+        keys: [`servicetracker`, new Date().getMilliseconds()],
+        maxAge: 2 * 60 * 60 * 1000 // 48 hours
+    }));
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     app.use('/', express.static(`${__dirname}/dashboard/static/`));
     app.set('views', `${__dirname}/dashboard/views/`);
@@ -51,7 +68,15 @@ try {
     registerEndpoints();
 
     if (exports.enableDashboard && exports.usingDatabase) {
+
+        // No point setting up auth if we're not using it
+        let AccountSchema = require('./database/schemas/accountSchema');
+        passport.use(new LocalStrategy(AccountSchema.authenticate()));
+        passport.serializeUser(AccountSchema.serializeUser());
+        passport.deserializeUser(AccountSchema.deserializeUser());
+
         dashboard.init(app);
+
         signale.watch(`[ Listening for dashboard connections at ${chalk.red('/dashboard')} ]`);
     } else {
         signale.info(`[ Dashboard disable either due to it being disabled or no database! ]`);

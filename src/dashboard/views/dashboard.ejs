@@ -13,9 +13,11 @@
         <nav class="navbar" role="navigation">
             <div class="navbar-menu">
                 <div class="navbar-end">
+                    <% if (isAdmin) { %>
                     <div class="navbar-item">
                         <span class="button is-info is-outlined">New Service</span>
                     </div>
+                    <% } %>
 
                     <div class="navbar-item" title="Change theme!">
                         <span class="button is-info is-outlined">
@@ -46,11 +48,11 @@
                 </span>
                 <p class="title is-4">❮ Easy to view stats ❯</p>
             </div>
-
-            </nav>
+        </div>
     </div>
 </section>
 
+<% if (isAdmin) { %>
 <% if(services.length === 0){ %>
 <div class="notification is-danger has-text-centered">
     <b>~ There are no services registered to record active sessions! ~</b>
@@ -61,6 +63,10 @@
     <h1 class="title"><%- services[x].name %></h1>
 </section>
 
+<% } } else { %>
+<section class="section is-danger">
+    Not logged in
+</section>
 <% } %>
 
 <% include ./partials/footer.ejs %>
