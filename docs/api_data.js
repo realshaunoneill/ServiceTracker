@@ -3,8 +3,8 @@ define({
         {
             "type": "get",
             "url": "/api/service",
-            "title": "Request information about a specific service",
-            "name": "FetchService",
+            "title": "Fetch Service",
+            "description": "<p>Request information about a specific service</p>",
             "group": "Service",
             "parameter": {
                 "fields": {
@@ -34,14 +34,22 @@ define({
             },
             "version": "0.0.0",
             "filename": "src/index.js",
-            "groupTitle": "Service"
+            "groupTitle": "Service",
+            "name": "GetApiService"
         },
         {
             "type": "get",
             "url": "/api/sessions",
-            "title": "Request session information about a service",
-            "name": "FetchSessions",
+            "title": "Fetch Sessions",
+            "description": "<p>Request session information about a service</p>",
             "group": "Sessions",
+            "permission": [
+                {
+                    "name": "auth",
+                    "title": "Authorized use only",
+                    "description": "<p>Only authorized users may use this endpoint</p>"
+                }
+            ],
             "parameter": {
                 "fields": {
                     "Parameter": [
@@ -70,13 +78,14 @@ define({
             },
             "version": "0.0.0",
             "filename": "src/index.js",
-            "groupTitle": "Sessions"
+            "groupTitle": "Sessions",
+            "name": "GetApiSessions"
         },
         {
             "type": "post",
             "url": "/api/sessions",
-            "title": "Add a new session to a particular service",
-            "name": "RecordSession",
+            "title": "Record Session",
+            "description": "<p>Add a new session to a particular service</p>",
             "group": "Sessions",
             "parameter": {
                 "fields": {
@@ -107,7 +116,8 @@ define({
             },
             "version": "0.0.0",
             "filename": "src/index.js",
-            "groupTitle": "Sessions"
+            "groupTitle": "Sessions",
+            "name": "PostApiSessions"
         }
     ]
 });

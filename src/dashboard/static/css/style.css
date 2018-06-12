@@ -1,0 +1,41 @@
+.animate {
+    animation: colorchange 10s;
+    -webkit-animation: colorchange 10s;
+}
+
+@keyframes colorchange {
+    0% {
+        background: #363636;
+    }
+    25% {
+        background: #1f191a;
+    }
+    50% {
+        background: #1f191a;
+    }
+    75% {
+        background: #1f191a;
+    }
+    100% {
+        background: #363636;
+    }
+}
+
+@-webkit-keyframes colorchange /* Safari and Chrome - necessary duplicate */
+{
+    0% {
+        background: #363636;
+    }
+    25% {
+        background: #1f191a;
+    }
+    50% {
+        background: #1f191a;
+    }
+    75% {
+        background: #1f191a;
+    }
+    100% {
+        background: #363636;
+    }
+}

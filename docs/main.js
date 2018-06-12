@@ -454,7 +454,6 @@ require([
         // init modules
         sampleRequest.initDynamic();
     }
-
     initDynamic();
 
     // Pre- / Code-Format

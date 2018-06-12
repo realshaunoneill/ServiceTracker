@@ -11,6 +11,7 @@ const URL_REGEX = '(http(s)?:\\/\\/.)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.
  * @param {Boolean} requireToken - If a service token to record the session data
  * @param {String} token - The token required to save a new session
  * @param {Number} sessionWait - The amount of days before a new session can be sent and recorded
+ * @returns {Object} newApp - The new service application that was saved
  */
 exports.saveNewApp = async function (serviceName, requireToken, token, sessionWait) {
     try {
@@ -23,8 +24,7 @@ exports.saveNewApp = async function (serviceName, requireToken, token, sessionWa
                 sessionWait: sessionWait,
                 sessions: []
             });
-            newApp.save();
-            return true;
+            return await newApp.save();
         }
         signale.info(`New session saved for service name ${serviceName}, listening for new sessions immediately..`);
     } catch (err) {
@@ -36,18 +36,18 @@ exports.saveNewApp = async function (serviceName, requireToken, token, sessionWa
  * Returns the list of apps with a specific name or all apps
  * @async
  * @param {String} name - The name of the service to search for
- * @returns List of apps
+ * @returns {Array<Object>} - List of apps
  */
 exports.fetchService = async function (name) {
     try {
         let apps;
 
         if (name) {
-            signale.debug(`Searching for services with the name ${name}`);
             apps = await driver.getModals().Apps.find({name: name});
+            signale.debug(`Searching for services with the name ${name} - ${(apps ? 'Found One' : 'None Found')}`);
         } else {
-            signale.debug(`No service search passed, returning all services`);
             apps = await driver.getModals().Apps.find({});
+            signale.debug(`No service search passed, returning all services - ${(apps ? 'Found Some' : 'None Found')}`);
         }
 
         return apps;
@@ -61,7 +61,7 @@ exports.fetchService = async function (name) {
  * @param service - The service modal this application runs
  * @param {String} sessionData - The applications unique ID to differentiate it from other applications
  * @param {String} token - The token being supplied by the application
- * @return {Promise<Boolean>} - Whether the session was successfully saved
+ * @return {Promise<Object>} - The service object after the new session is saved
  */
 exports.saveSession = async function (service, sessionData, token) {
     try {
@@ -73,13 +73,7 @@ exports.saveSession = async function (service, sessionData, token) {
             token: token
         });
 
-        service[0].save().then(() => {
-            return true;
-        }).catch(err => {
-            return false;
-        })
-
-
+        return await service[0].save();
     } catch (err) {
         signale.error(`Unable to save new service session, Error: ${err.stack}`);
     }

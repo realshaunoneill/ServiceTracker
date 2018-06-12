@@ -7,6 +7,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const signale = require('signale');
+const chalk = require('chalk');
 
 const driver = require('./database/driver');
 const schemaUtils = require('./database/schemaUtils');
@@ -32,7 +33,7 @@ if (exports.debug) signale.info(`Debug mode enable... Showing all status 200 req
 
 if (exports.usingDatabase && !exports.debug) {
     driver.connect().then(suc => {
-        if (suc) signale.success(`Successfully connected to database at ${exports.databaseUrl}`);
+        if (suc) signale.success(`Successfully connected to database at ${chalk.green(exports.databaseUrl)}`);
         else return signale.fatal(`Unable to connect to database at ${exports.databaseUrl}`);
     });
 }
@@ -51,7 +52,7 @@ try {
 
     if (exports.enableDashboard && exports.usingDatabase) {
         dashboard.init(app);
-        signale.watch(`[ Listening for dashboard connections on /dashboard ]`);
+        signale.watch(`[ Listening for dashboard connections at ${chalk.red('/dashboard')} ]`);
     } else {
         signale.info(`[ Dashboard disable either due to it being disabled or no database! ]`);
     }
@@ -63,7 +64,7 @@ try {
         if (err) {
             return signale.fatal(`FAILED TO OPEN WEB SERVER, ERROR: ${err.stack}`);
         }
-        signale.success(`Successfully started webserver... listening on port: ${exports.port}`);
+        signale.success(`Successfully started webserver... listening on port: ${chalk.green(exports.port)}`);
     })
 
 } catch (err) {
@@ -73,8 +74,13 @@ try {
 function registerEndpoints() {
 
     /**
-     * @api {get} /api/service Request information about a specific service
-     * @apiName FetchService
+     * @apiDefine auth Authorized use only
+     * Only authorized users may use this endpoint
+     */
+
+    /**
+     * @api {get} /api/service Fetch Service
+     * @apiDescription Request information about a specific service
      * @apiGroup Service
      *
      * @apiParam {String} name The services unique name
@@ -85,7 +91,7 @@ function registerEndpoints() {
         try {
             let name = req.query.name;
             let services = await schemaUtils.fetchService(name);
-            if (!services) return res.status(500).send(`No services exist!`);
+            if (!services) return res.status(500).json({error: `No services exist!`});
 
             res.status(200).json(services);
         } catch (err) {
@@ -123,9 +129,10 @@ function registerEndpoints() {
     });
 
     /**
-     * @api {get} /api/sessions Request session information about a service
-     * @apiName FetchSessions
+     * @api {get} /api/sessions Fetch Sessions
+     * @apiDescription Request session information about a service
      * @apiGroup Sessions
+     * @apiPermission auth
      *
      * @apiParam {String} name The name of the service
      *
@@ -134,10 +141,10 @@ function registerEndpoints() {
     app.get('/api/sessions', async (req, res) => {
         try {
             let name = req.query.name;
-            if (!name) return res.status(500).send(`You must specify a name to search for!`);
+            if (!name) return res.status(500).json({error: `You must specify a name to search for!`});
 
             let service = await schemaUtils.fetchService(name);
-            if (!service) return res.status(500).send(`No service with the name ${name} exists!`);
+            if (!service) return res.status(500).json({error: `No service with the name ${name} exists!`});
 
             res.status(200).json(service.services || []);
 
@@ -147,8 +154,8 @@ function registerEndpoints() {
     });
 
     /**
-     * @api {post} /api/sessions Add a new session to a particular service
-     * @apiName RecordSession
+     * @api {post} /api/sessions Record Session
+     * @apiDescription Add a new session to a particular service
      * @apiGroup Sessions
      *
      * @apiParam {String} name The name of the service this session is for
@@ -161,24 +168,27 @@ function registerEndpoints() {
             let sessionData = req.query.sessionData;
             let token = req.query.token;
 
-            if (!searchName || !sessionData) return res.status(403).send(`You must specify a serviceName to search for along with a sessionData!`);
+            if (!searchName || !sessionData) return res.status(403).json({error: `You must specify a serviceName to search for along with a sessionData!`});
 
             if (!exports.usingDatabase || exports.debug) {
-                res.status(200).send(`Successfully recorded session`);
+                res.status(200).json({status: `Successfully recorded session`, debug: true});
                 return signale.info(`Successfully recorded session info for ${searchName}!`);
             }
 
             let service = await schemaUtils.fetchService(searchName);
-            if (!service) return res.status(403).send(`No service with the name ${searchName} exists or you don't have permission to view it!`);
+            if (!service) return res.status(403).json({error: `No service with the name ${searchName} exists or you don't have permission to view it!`});
 
             // Check if we need an auth token and one was sent
             if (service.requireToken) {
-                if (!token || (service.token !== token)) return res.status(403).send(`You don't have permission to register a session for this service!`);
+                if (!token || (service.token !== token)) return res.status(403).json({error: `You don't have permission to register a session for this service!`});
             }
 
             let result = await schemaUtils.saveSession(service, sessionData, token);
-            if (result) return res.status(500).send(`The session failed to send for an unknown reason! Try again later!`);
-            res.status(200).send(`Session successfully recorded!`);
+            if (!result) return res.status(500).json({
+                error: `The session failed to send for an unknown reason! Try again later!`,
+                received: `${searchName}, ${sessionData}, ${token}`
+            });
+            res.status(200).json({status: 'Session successfully recorded', session: result});
 
         } catch (err) {
             signale.error(`Unable to handle session recording, Error: ${err.stack}`);
