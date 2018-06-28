@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
 module.exports = new mongoose.Schema({
-    sessionData: {type: String},
+    dataID: {type: String},
+    dataText: {type: String},
+    dataURL: {type: String},
     date: {type: Date, default: new Date()},
+    lastUpdatedDate: {type: Date, default: new Date()},
     token: {type: String},
-    dataIsURL: {type: Boolean},
     sameSessionCount: {type: Number, default: 0}
 });

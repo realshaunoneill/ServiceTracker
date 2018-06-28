@@ -43,11 +43,11 @@ exports.fetchService = async function (name) {
         let apps;
 
         if (name) {
-            apps = await driver.getModals().Apps.find({name: name});
-            signale.debug(`Searching for services with the name ${name} - ${(apps ? 'Found One' : 'None Found')}`);
+            apps = await driver.getModals().Apps.findOne({name: name});
+            signale.debug(`Searching for services with the name ${name} - ${(apps ? `Found one` : 'None Found')}`);
         } else {
             apps = await driver.getModals().Apps.find({});
-            signale.debug(`No service search passed, returning all services - ${(apps ? 'Found Some' : 'None Found')}`);
+            signale.debug(`No service search passed, returning all services - ${(apps ? `Found ${apps.length}` : 'None Found')}`);
         }
 
         return apps;
@@ -59,21 +59,24 @@ exports.fetchService = async function (name) {
 /**
  * Saves a new session to it's service is the time limit has exceeded
  * @param service - The service modal this application runs
- * @param {String} sessionData - The applications unique ID to differentiate it from other applications
+ * @param {String} dataID - The sessions unique ID to differentiate it from other sessions
+ * @param {String} dataText - The optional extra text that may be sent by a session
+ * @param {String} dataURL - The optional url that may be sent by a session
  * @param {String} token - The token being supplied by the application
  * @return {Promise<Object>} - The service object after the new session is saved
  */
-exports.saveSession = async function (service, sessionData, token) {
+exports.saveSession = async function (service, dataID, dataText, dataURL, token) {
     try {
         //TODO we have to make sure there is an element
-        service[0].sessions.push({
-            sessionData: sessionData,
-            dataIsURL: (!!sessionData.match(URL_REGEX)),
+        service.sessions.push({
+            dataID: dataID,
+            dataText: dataText,
+            dataURL: dataURL,
             date: new Date(),
             token: token
         });
 
-        return await service[0].save();
+        return await service.save();
     } catch (err) {
         signale.error(`Unable to save new service session, Error: ${err.stack}`);
     }

@@ -121,17 +121,18 @@ function registerEndpoints() {
             res.status(200).json(services);
         } catch (err) {
             signale.error(`Error fetching saved services, Error: ${err.stack}`);
+            res.status(500).json({error: 'Unhandled error, please try again later!', stack: err.name})
         }
     });
 
     app.post('/api/service', async (req, res) => {
         try {
-            let name = req.query.name;
-            let requireToken = req.query.requireToken;
-            let token = req.query.token;
-            let sessionWait = req.query.sessionWait = 1;
+            let name = req.body.name;
+            let requireToken = req.body.requireToken;
+            let token = req.body.token;
+            let sessionWait = req.body.sessionWait = 1;
 
-            if (!name || !(requireToken && !token)) return res.status(500).send(`You must specify the following query parameters: name, requireToken, token, sessionWait`);
+            if (!name || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, requireToken, token, sessionWait`);
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully saving session data for the new service: ${name}`);
@@ -150,6 +151,7 @@ function registerEndpoints() {
 
         } catch (err) {
             signale.error(`Error registering new service, Error: ${err.stack}`);
+            res.status(500).json({error: 'Unhandled error, please try again later!', stack: err.name})
         }
     });
 
@@ -175,6 +177,7 @@ function registerEndpoints() {
 
         } catch (err) {
             signale.error(`Unable fetching sessions, Errors: ${err.stack}`);
+            res.status(500).json({error: 'Unhandled error, please try again later!', stack: err.name})
         }
     });
 
@@ -184,16 +187,20 @@ function registerEndpoints() {
      * @apiGroup Sessions
      *
      * @apiParam {String} name The name of the service this session is for
-     * @apiParam {String} sessionData The data the session has to record
+     * @apiParam {String} sessionID The sessions unique ID to differentiate it from other sessions
+     * @apiParam {String} dataText The optional extra text that may be sent by a session
+     * @apiParam {String} dataURL The optional url that may be sent by a session
      * @apiParam {String} token The auth token optionally required by the service to record the session
      */
     app.post('/api/sessions', async (req, res) => {
         try {
-            let searchName = req.query.name;
-            let sessionData = req.query.sessionData;
-            let token = req.query.token;
+            let searchName = req.body.name;
+            let sessionID = req.body.sessionID;
+            let sessionText = req.body.sessionText;
+            let sessionURL = req.body.sessionURL;
+            let token = req.body.token;
 
-            if (!searchName || !sessionData) return res.status(403).json({error: `You must specify a serviceName to search for along with a sessionData!`});
+            if (!searchName || !sessionID) return res.status(403).json({error: `You must specify a serviceName to search for along with a sessionID!`});
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).json({status: `Successfully recorded session`, debug: true});
@@ -205,18 +212,41 @@ function registerEndpoints() {
 
             // Check if we need an auth token and one was sent
             if (service.requireToken) {
-                if (!token || (service.token !== token)) return res.status(403).json({error: `You don't have permission to register a session for this service!`});
+                if (!token || (service.appToken !== token)) return res.status(403).json({error: `You don't have permission to register a session for this service or you haven't sent the right token!`});
             }
 
-            let result = await schemaUtils.saveSession(service, sessionData, token);
+            // We're going to check if we have already recorded a session with the same id before
+            let incremented = service.sessions.every(ses => {
+                if (ses.dataID === sessionID) {
+                    // Increment counter instead of saving new session
+                    incremented = true;
+                    ses.sameSessionCount += 1;
+                    ses.lastUpdatedDate = new Date();
+
+                    service.save().then((updated) => {
+                        res.status(200).json({
+                            status: `Session [${sessionID}] successfully incremented!`,
+                            service: updated
+                        })
+                    }).catch(err => {
+                        res.status(500).json({error: `Unable to save updated session`, stack: err.name});
+                    });
+                }
+                return ses.dataID !== sessionID;
+            });
+
+            if (!incremented) return;
+
+            let result = await schemaUtils.saveSession(service, sessionID, sessionText, sessionURL, token);
             if (!result) return res.status(500).json({
                 error: `The session failed to send for an unknown reason! Try again later!`,
-                received: `${searchName}, ${sessionData}, ${token}`
+                received: `${searchName}, ${sessionID}, ${sessionText || '[No text sent]'}, ${sessionURL || '[No URL sent]'} ${token}`
             });
             res.status(200).json({status: 'Session successfully recorded', session: result});
 
         } catch (err) {
             signale.error(`Unable to handle session recording, Error: ${err.stack}`);
+            res.status(500).json({error: 'Unhandled error, please try again later!', stack: err.name})
         }
     })
 }
