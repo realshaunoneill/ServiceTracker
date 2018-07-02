@@ -100,7 +100,7 @@ function registerEndpoints() {
      */
 
     /**
-     * @api {get} /api/service Fetch Service
+     * @api {get} /api/applications Fetch Service
      * @apiDescription Request information about a specific service
      * @apiGroup Service
      *
@@ -108,7 +108,7 @@ function registerEndpoints() {
      *
      * @apiSuccess {JSON} service The service data including sessions
      */
-    app.get('/api/service', async (req, res) => {
+    app.get('/api/applications', async (req, res) => {
         try {
             let name = req.query.name;
             let services = await schemaUtils.fetchService(name);
@@ -121,14 +121,14 @@ function registerEndpoints() {
         }
     });
 
-    app.post('/api/service', async (req, res) => {
+    app.post('/api/applications', async (req, res) => {
         try {
             let name = req.body.name;
+            let picture = req.body.picture;
             let requireToken = req.body.requireToken;
             let token = req.body.token;
-            let sessionWait = req.body.sessionWait = 1;
 
-            if (!name || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, requireToken, token, sessionWait`);
+            if (!name || !picture || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, picture, requireToken, token`);
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully saving session data for the new service: ${name}`);
@@ -141,7 +141,7 @@ function registerEndpoints() {
                 return res.status(500).send(`A service with the name ${name} already exists!`);
             }
 
-            schemaUtils.saveNewApp(name, requireToken, token, sessionWait).then(() => {
+            schemaUtils.saveNewApp(name, picture, requireToken, token).then(() => {
                 res.status(200).send(`Successfully saved new service with the name ${name}`);
             })
 
