@@ -1,11 +1,7 @@
-const fs = require('fs');
-const path = require('path');
 const http = require('http');
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const morgan = require('morgan');
 const signale = require('signale');
 const chalk = require('chalk');
 const passport = require('passport');
