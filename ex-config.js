@@ -1,6 +1,6 @@
 module.exports = {
     databaseUrl: '',
-    port: 8080,
+    port: 8585,
     enableDashboard: true,
     debug: false
 };
