@@ -70,7 +70,12 @@ exports.saveSession = async function (service, dataID, dataText, dataURL, token)
         //TODO we have to make sure there is an element
         service.sessions.push({
             dataID: dataID,
-            dataText: dataText,
+            dataTexts: [
+                {
+                    sessionCount: 0,
+                    text: dataText
+                }
+            ],
             dataURL: dataURL,
             date: new Date(),
             token: token

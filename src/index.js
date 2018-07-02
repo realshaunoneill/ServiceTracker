@@ -188,8 +188,8 @@ function registerEndpoints() {
      *
      * @apiParam {String} name The name of the service this session is for
      * @apiParam {String} sessionID The sessions unique ID to differentiate it from other sessions
-     * @apiParam {String} dataText The optional extra text that may be sent by a session
-     * @apiParam {String} dataURL The optional url that may be sent by a session
+     * @apiParam {String} sessionText The optional extra text that may be sent by a session
+     * @apiParam {String} sessionURL The optional url that may be sent by a session
      * @apiParam {String} token The auth token optionally required by the service to record the session
      */
     app.post('/api/sessions', async (req, res) => {
@@ -218,10 +218,13 @@ function registerEndpoints() {
             // We're going to check if we have already recorded a session with the same id before
             let incremented = service.sessions.every(ses => {
                 if (ses.dataID === sessionID) {
-                    // Increment counter instead of saving new session
-                    incremented = true;
+
                     ses.sameSessionCount += 1;
                     ses.lastUpdatedDate = new Date();
+                    ses.dataTexts.push({
+                        sessionCount: ses.sameSessionCount,
+                        text: sessionText
+                    });
 
                     service.save().then((updated) => {
                         res.status(200).json({
