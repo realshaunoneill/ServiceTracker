@@ -27,7 +27,7 @@ try {
 const app = exports.app = express();
 
 exports.databaseUrl = process.env.dburl || config.databaseUrl || null;
-exports.port = process.env.port || config.port || 80;
+exports.port = process.env.port || config.port || 8585;
 exports.usingDatabase = exports.databaseUrl && exports.databaseUrl.length > 10;
 exports.enableDashboard = process.env.enableDashboard || config.enableDashboard || true;
 exports.debug = process.env.debug || config.debug;
