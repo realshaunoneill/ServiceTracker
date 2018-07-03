@@ -100,13 +100,13 @@ function registerEndpoints() {
      */
 
     /**
-     * @api {get} /api/applications Fetch Service
-     * @apiDescription Request information about a specific service
-     * @apiGroup Service
+     * @api {get} /api/applications Fetch application data
+     * @apiDescription Request information about a specific application
+     * @apiGroup Application
      *
-     * @apiParam {String} name The services unique name
+     * @apiParam {String} name The applications unique name
      *
-     * @apiSuccess {JSON} service The service data including sessions
+     * @apiSuccess {JSON} application The applications data including sessions
      */
     app.get('/api/applications', async (req, res) => {
         try {
@@ -121,6 +121,18 @@ function registerEndpoints() {
         }
     });
 
+    /**
+     * @api {post} /api/applications Submit a application
+     * @apiDescription Submit a new application to be monitored
+     * @apiGroup Application
+     *
+     * @apiParam {String} name The applications name
+     * @apiParam {String} picture The picture for the application
+     * @apiParam {Boolean} requireToken Weather or not to require a token to be sent with a session
+     * @apiParam {String} token The token that should be sent with each session to be recorded
+     *
+     * @apiSuccess {JSON} application The returned application object that was created
+     */
     app.post('/api/applications', async (req, res) => {
         try {
             let name = req.body.name;
