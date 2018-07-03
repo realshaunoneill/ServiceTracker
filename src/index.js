@@ -125,6 +125,7 @@ function registerEndpoints() {
      * @api {post} /api/applications Submit a application
      * @apiDescription Submit a new application to be monitored
      * @apiGroup Application
+     * @apiPermission auth
      *
      * @apiParam {String} name The applications name
      * @apiParam {String} picture The picture for the application
