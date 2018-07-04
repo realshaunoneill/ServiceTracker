@@ -6,7 +6,45 @@
     <% include ./partials/header.ejs %>
 </head>
 
-<body>
+<body class="login-body">
+<section class="hero is-fullheight login-hero">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <div class="column is-4 is-offset-4">
+                <h3 class="title has-text-grey is-2">~ Login ~</h3>
+                <p class="subtitle has-text-grey is-4">Please login to proceed to the ServiceTracker dashboard!.</p>
+                <div class="box login-box">
+                    <figure class="login-avatar">
+                        <img src="https://placehold.it/128x128">
+                    </figure>
+                    <form id="loginForm" action="/login">
+                        <div class="field">
+                            <div class="control">
+                                <input class="input is-large" type="email" name="username" placeholder="Email Address"
+                                       autofocus="">
+                            </div>
+                        </div>
 
+                        <div class="field">
+                            <div class="control">
+                                <input class="input is-large" type="password" name="password"
+                                       placeholder="Account Password">
+                            </div>
+                        </div>
+                        <br>
+                        <hr>
+                        <button class="button is-block is-info is-large is-fullwidth" onclick="login();">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function login() {
+        document.getElementById('loginForm').submit();
+    }
+</script>
 
 </body>

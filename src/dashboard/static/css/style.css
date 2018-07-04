@@ -3,6 +3,47 @@
     -webkit-animation: colorchange 10s;
 }
 
+.login-body {
+    font-family: 'Open Sans', serif;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.login-hero {
+    background: #F2F6FA;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.login-hero p {
+    font-weight: 700;
+}
+
+.login-hero input {
+    font-weight: 300;
+}
+
+.login-hero p.subtitle {
+    padding-top: 1rem;
+}
+
+.login-box {
+    margin-top: 5rem;
+}
+
+.login-avatar {
+    margin-top: -70px;
+    padding-bottom: 20px;
+}
+
+.login-avatar img {
+    padding: 5px;
+    background: #fff;
+    border-radius: 50%;
+    -webkit-box-shadow: 0 2px 3px rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .1);
+    box-shadow: 0 2px 3px rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .1);
+}
+
 @keyframes colorchange {
     0% {
         background: #363636;
