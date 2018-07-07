@@ -11,9 +11,10 @@ const URL_REGEX = '(http(s)?:\\/\\/.)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.
  * @param {String} picture - The URL to the app picture
  * @param {Boolean} requireToken - If a service token to record the session data
  * @param {String} token - The token required to save a new session
+ * @param {Number} sessionTimeout - The amount of days the same session needs to wait before it can update its status
  * @returns {Object} newApp - The new service application that was saved
  */
-exports.saveNewApp = async function (serviceName, picture, requireToken, token) {
+exports.saveNewApp = async function (serviceName, picture, requireToken, token, sessionTimeout) {
     try {
         if (index.usingDatabase) {
             let newApp = new driver.getModals().Apps({
@@ -22,7 +23,8 @@ exports.saveNewApp = async function (serviceName, picture, requireToken, token) 
                 picture: picture,
                 appToken: token,
                 date: new Date().toDateString(),
-                sessions: []
+                sessions: [],
+                sessionTimeout: sessionTimeout
             });
             return await newApp.save();
         }

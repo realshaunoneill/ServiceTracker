@@ -9,5 +9,6 @@ module.exports = new mongoose.Schema({
     picture: {type: String},
     requireToken: {type: Boolean, default: false},
     appToken: {type: String},
-    removed: {type: Boolean, default: false}
+    removed: {type: Boolean, default: false},
+    sessionTimeout: {type: Number, default: 1}
 });

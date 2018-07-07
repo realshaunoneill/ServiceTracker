@@ -1,10 +1,10 @@
 [
   {
     "type": "get",
-    "url": "/api/service",
-    "title": "Fetch Service",
-    "description": "<p>Request information about a specific service</p>",
-    "group": "Service",
+    "url": "/api/applications",
+    "title": "Fetch application data",
+    "description": "<p>Request information about a specific application</p>",
+    "group": "Application",
     "parameter": {
       "fields": {
         "Parameter": [
@@ -13,7 +13,7 @@
             "type": "String",
             "optional": false,
             "field": "name",
-            "description": "<p>The services unique name</p>"
+            "description": "<p>The applications unique name</p>"
           }
         ]
       }
@@ -25,16 +25,88 @@
             "group": "Success 200",
             "type": "JSON",
             "optional": false,
-            "field": "service",
-            "description": "<p>The service data including sessions</p>"
+            "field": "application",
+            "description": "<p>The applications data including sessions</p>"
           }
         ]
       }
     },
     "version": "0.0.0",
     "filename": "src/index.js",
-    "groupTitle": "Service",
-    "name": "GetApiService"
+    "groupTitle": "Application",
+    "name": "GetApiApplications"
+  },
+  {
+    "type": "post",
+    "url": "/api/applications",
+    "title": "Submit a application",
+    "description": "<p>Submit a new application to be monitored</p>",
+    "group": "Application",
+    "permission": [
+      {
+        "name": "auth",
+        "title": "Authorized use only",
+        "description": "<p>Only authorized users may use this endpoint</p>"
+      }
+    ],
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "name",
+            "description": "<p>The applications name</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "picture",
+            "description": "<p>The picture for the application</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Boolean",
+            "optional": false,
+            "field": "requireToken",
+            "description": "<p>Weather or not to require a token to be sent with a session</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "token",
+            "description": "<p>The token that should be sent with each session to be recorded</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "timeout",
+            "description": "<p>The amount of days the same session needs to wait before it can update its status</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "JSON",
+            "optional": false,
+            "field": "application",
+            "description": "<p>The returned application object that was created</p>"
+          }
+        ]
+      }
+    },
+    "version": "0.0.0",
+    "filename": "src/index.js",
+    "groupTitle": "Application",
+    "name": "PostApiApplications"
   },
   {
     "type": "get",
@@ -100,8 +172,22 @@
             "group": "Parameter",
             "type": "String",
             "optional": false,
-            "field": "sessionData",
-            "description": "<p>The data the session has to record</p>"
+            "field": "sessionID",
+            "description": "<p>The sessions unique ID to differentiate it from other sessions</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "sessionText",
+            "description": "<p>The optional extra text that may be sent by a session</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "sessionURL",
+            "description": "<p>The optional url that may be sent by a session</p>"
           },
           {
             "group": "Parameter",

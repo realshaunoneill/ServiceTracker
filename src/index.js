@@ -6,6 +6,7 @@ const signale = require('signale');
 const chalk = require('chalk');
 const passport = require('passport');
 const cookieSession = require('cookie-session');
+const rateLimit = require('express-rate-limit');
 
 const driver = require('./database/driver');
 const schemaUtils = require('./database/schemaUtils');
@@ -27,6 +28,7 @@ exports.port = process.env.port || config.port || 8585;
 exports.usingDatabase = exports.databaseUrl && exports.databaseUrl.length > 10;
 exports.enableDashboard = process.env.enableDashboard || config.enableDashboard || true;
 exports.debug = process.env.debug || config.debug;
+exports.registrationEnabled = process.env.registrationEnabled || config.registrationEnabled || false;
 
 if (!exports.usingDatabase) signale.info(`No database url specified.... Only logging new sessions to console!`);
 if (exports.debug) signale.info(`Debug mode enable... Showing all status 200 requests to console!`);
@@ -37,6 +39,17 @@ if (exports.usingDatabase && !exports.debug) {
         else return signale.fatal(`Unable to connect to database at ${exports.databaseUrl}`);
     });
 }
+
+exports.checkAuth = function (req, res, next) {
+    if (req.isAuthenticated()) {
+        // We'll check for admin
+        if (req.user.isAdmin) return next();
+    }
+    res.status(403).json({
+        error: `You don't appear to be logged in or you don't have permission to view this!`,
+        loggedIn: req.isAuthenticated()
+    })
+};
 
 try {
 
@@ -50,6 +63,14 @@ try {
     app.use(cors());
     app.use(express.static('Web'));
     app.set('view engine', 'ejs');
+    app.enable('trust proxy'); // only if you're behind a reverse proxy (Heroku, Bluemix, AWS if you use an ELB, custom Nginx setup, etc)
+
+    app.use('/api/', new rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        delayMs: 0
+    }));
+
     app.use(cookieSession({
         name: 'loginSession',
         keys: [`servicetracker`, new Date().getMilliseconds()],
@@ -103,12 +124,13 @@ function registerEndpoints() {
      * @api {get} /api/applications Fetch application data
      * @apiDescription Request information about a specific application
      * @apiGroup Application
+     * @apiPermission auth
      *
      * @apiParam {String} name The applications unique name
      *
      * @apiSuccess {JSON} application The applications data including sessions
      */
-    app.get('/api/applications', async (req, res) => {
+    app.get('/api/applications', exports.checkAuth, async (req, res) => {
         try {
             let name = req.query.name;
             let services = await schemaUtils.fetchService(name);
@@ -131,17 +153,19 @@ function registerEndpoints() {
      * @apiParam {String} picture The picture for the application
      * @apiParam {Boolean} requireToken Weather or not to require a token to be sent with a session
      * @apiParam {String} token The token that should be sent with each session to be recorded
+     * @apiParam {Number} timeout The amount of days the same session needs to wait before it can update its status
      *
      * @apiSuccess {JSON} application The returned application object that was created
      */
-    app.post('/api/applications', async (req, res) => {
+    app.post('/api/applications', exports.checkAuth, async (req, res) => {
         try {
             let name = req.body.name;
             let picture = req.body.picture;
             let requireToken = req.body.requireToken;
             let token = req.body.token;
+            let timeout = req.body.timeout;
 
-            if (!name || !picture || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, picture, requireToken, token`);
+            if (!name || !picture || !timeout || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, picture, requireToken, token, timeout`);
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully saving session data for the new service: ${name}`);
@@ -154,7 +178,7 @@ function registerEndpoints() {
                 return res.status(500).send(`A service with the name ${name} already exists!`);
             }
 
-            schemaUtils.saveNewApp(name, picture, requireToken, token).then(() => {
+            schemaUtils.saveNewApp(name, picture, requireToken, token, timeout).then(() => {
                 res.status(200).send(`Successfully saved new service with the name ${name}`);
             })
 
@@ -174,7 +198,7 @@ function registerEndpoints() {
      *
      * @apiSuccess {JSON} sessions The session data for the service
      */
-    app.get('/api/sessions', async (req, res) => {
+    app.get('/api/sessions', exports.checkAuth, async (req, res) => {
         try {
             let name = req.query.name;
             if (!name) return res.status(500).json({error: `You must specify a name to search for!`});
@@ -227,6 +251,16 @@ function registerEndpoints() {
             // We're going to check if we have already recorded a session with the same id before
             let incremented = service.sessions.every(ses => {
                 if (ses.dataID === sessionID) {
+
+                    // Check if its over the timeout
+                    if (service.sessionTimeout > 0) {
+                        let daysDifference = parseInt((new Date() - ses.lastUpdatedDate) / (1000 * 60 * 60 * 24));
+                        if (daysDifference < service.sessionTimeout) {
+                            return res.status(200).json({
+                                status: `Session update too soon`, updated: false
+                            })
+                        }
+                    }
 
                     ses.sameSessionCount += 1;
                     ses.lastUpdatedDate = new Date();
