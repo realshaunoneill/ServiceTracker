@@ -5,6 +5,13 @@
     "title": "Fetch application data",
     "description": "<p>Request information about a specific application</p>",
     "group": "Application",
+    "permission": [
+      {
+        "name": "auth",
+        "title": "Authorized use only",
+        "description": "<p>Only authorized users may use this endpoint</p>"
+      }
+    ],
     "parameter": {
       "fields": {
         "Parameter": [
