@@ -134,7 +134,7 @@ function registerEndpoints() {
         try {
             let name = req.query.name;
             let services = await schemaUtils.fetchService(name);
-            if (!services) return res.status(500).json({error: `No services exist!`});
+            if (!services) return res.status(400).json({error: `No services exist!`});
 
             res.status(200).json(services);
         } catch (err) {
@@ -165,7 +165,7 @@ function registerEndpoints() {
             let token = req.body.token;
             let timeout = req.body.timeout;
 
-            if (!name || !picture || !timeout || (requireToken && !token)) return res.status(500).send(`You must specify the following parameters: name, picture, requireToken, token, timeout`);
+            if (!name || !picture || !timeout || (requireToken && !token)) return res.status(400).send(`You must specify the following parameters: name, picture, requireToken, token, timeout`);
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).send(`Successfully saving session data for the new service: ${name}`);
@@ -175,7 +175,7 @@ function registerEndpoints() {
             // We're going to check if a service already exists with the same name
             let searchService = await schemaUtils.fetchService(name);
             if (searchService) {
-                return res.status(500).send(`A service with the name ${name} already exists!`);
+                return res.status(400).send(`A service with the name ${name} already exists!`);
             }
 
             schemaUtils.saveNewApp(name, picture, requireToken, token, timeout).then(() => {
@@ -201,10 +201,10 @@ function registerEndpoints() {
     app.get('/api/sessions', exports.checkAuth, async (req, res) => {
         try {
             let name = req.query.name;
-            if (!name) return res.status(500).json({error: `You must specify a name to search for!`});
+            if (!name) return res.status(400).json({error: `You must specify a name to search for!`});
 
             let service = await schemaUtils.fetchService(name);
-            if (!service) return res.status(500).json({error: `No service with the name ${name} exists!`});
+            if (!service) return res.status(400).json({error: `No service with the name ${name} exists!`});
 
             res.status(200).json(service.services || []);
 
@@ -233,7 +233,7 @@ function registerEndpoints() {
             let sessionURL = req.body.sessionURL;
             let token = req.body.token;
 
-            if (!searchName || !sessionID) return res.status(403).json({error: `You must specify a serviceName to search for along with a sessionID!`});
+            if (!searchName || !sessionID) return res.status(400).json({error: `You must specify a serviceName to search for along with a sessionID!`});
 
             if (!exports.usingDatabase || exports.debug) {
                 res.status(200).json({status: `Successfully recorded session`, debug: true});
@@ -241,11 +241,11 @@ function registerEndpoints() {
             }
 
             let service = await schemaUtils.fetchService(searchName);
-            if (!service) return res.status(403).json({error: `No service with the name ${searchName} exists or you don't have permission to view it!`});
+            if (!service) return res.status(400).json({error: `No service with the name ${searchName} exists or you don't have permission to view it!`});
 
             // Check if we need an auth token and one was sent
             if (service.requireToken) {
-                if (!token || (service.appToken !== token)) return res.status(403).json({error: `You don't have permission to register a session for this service or you haven't sent the right token!`});
+                if (!token || (service.appToken !== token)) return res.status(400).json({error: `You don't have permission to register a session for this service or you haven't sent the right token!`});
             }
 
             // We're going to check if we have already recorded a session with the same id before
@@ -256,7 +256,7 @@ function registerEndpoints() {
                     if (service.sessionTimeout > 0) {
                         let daysDifference = parseInt((new Date() - ses.lastUpdatedDate) / (1000 * 60 * 60 * 24));
                         if (daysDifference < service.sessionTimeout) {
-                            return res.status(200).json({
+                            return res.status(429).json({
                                 status: `Session update too soon`, updated: false
                             })
                         }
