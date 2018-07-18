@@ -3,6 +3,7 @@ const schemaUtils = require('../database/schemaUtils');
 const Account = require('../database/schemas/accountSchema');
 
 const passport = require('passport');
+const crypto = require("crypto");
 
 exports.init = function (app) {
 
@@ -12,7 +13,10 @@ exports.init = function (app) {
                 error: `Registration is disabled at this time`
             });
 
-            Account.register(new Account({username: req.body.username}), req.body.password, (err, account) => {
+            Account.register(new Account({
+                username: req.body.username,
+                apiKey: crypto.randomBytes(14).toString('hex')
+            }), req.body.password, (err, account) => {
                 if (err) {
                     console.error(err.stack);
                     return res.status(500).json({error: err.message, username: req.body.username});

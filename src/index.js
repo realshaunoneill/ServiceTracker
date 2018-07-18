@@ -40,15 +40,29 @@ if (exports.usingDatabase && !exports.debug) {
     });
 }
 
-exports.checkAuth = function (req, res, next) {
-    if (req.isAuthenticated()) {
-        // We'll check for admin
-        if (req.user.isAdmin) return next();
+exports.checkAuth = async function (req, res, next) {
+    if ((req.query.username || req.body.username) && (req.body.apiKey || req.query.apiKey)) {
+
+        let username = (req.query.username || req.body.username);
+        let apiKey = (req.body.apiKey || req.query.apiKey);
+
+        let isAdmin = await schemaUtils.isApiAdmin(username, apiKey);
+        if (isAdmin) return next();
+        else {
+            res.status(403).json({
+                error: `You don't appear to be logged in or you don't have permission to view this!`,
+                loggedIn: req.isAuthenticated()
+            })
+        }
+
+    } else {
+        if (req.isAuthenticated() && req.user.isAdmin) return next();
+
+        res.status(403).json({
+            error: `You don't appear to be logged in or you don't have permission to view this!`,
+            loggedIn: req.isAuthenticated()
+        })
     }
-    res.status(403).json({
-        error: `You don't appear to be logged in or you don't have permission to view this!`,
-        loggedIn: req.isAuthenticated()
-    })
 };
 
 try {
@@ -206,7 +220,7 @@ function registerEndpoints() {
             let service = await schemaUtils.fetchService(name);
             if (!service) return res.status(400).json({error: `No service with the name ${name} exists!`});
 
-            res.status(200).json(service.services || []);
+            res.status(200).json(service.sessions || []);
 
         } catch (err) {
             signale.error(`Unable fetching sessions, Errors: ${err.stack}`);

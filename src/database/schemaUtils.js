@@ -88,3 +88,21 @@ exports.saveSession = async function (service, dataID, dataText, dataURL, token)
         signale.error(`Unable to save new service session, Error: ${err.stack}`);
     }
 };
+
+/**
+ * Checks if an API user has admin permissions
+ * @param {String} username - The username of the api user
+ * @param {String} apiKey - The api key for the specific username
+ * @returns {Promise<boolean>} - If the user has administrator permissions
+ */
+exports.isApiAdmin = async function (username, apiKey) {
+    try {
+        let user = await driver.getModals().AccountSchema.findOne({username: username});
+        if (!user) return false;
+
+        return !!(user.apiKey === apiKey && user.isAdmin);
+
+    } catch (err) {
+        signale.error(`Unable to check if api user is admin, Error: ${err.stack}`);
+    }
+};
